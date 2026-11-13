@@ -33,6 +33,7 @@ enum class Feature(
     DESKTOP_SITE("desktop_site", R.string.feature_desktop_site, R.string.feature_desktop_site_desc),
     FIND_IN_PAGE("find_in_page", R.string.feature_find_in_page, R.string.feature_find_in_page_desc),
     READER_MODE("reader_mode", R.string.feature_reader_mode, R.string.feature_reader_mode_desc),
+    AD_BLOCK("ad_block", R.string.feature_ad_block, R.string.feature_ad_block_desc),
 }
 
 class FeaturePrefs private constructor(context: Context) {

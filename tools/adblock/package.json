@@ -1,0 +1,14 @@
+{
+  "name": "webble-adblock",
+  "private": true,
+  "type": "module",
+  "description": "Builds the ad blocker bundle and filter engine shipped in app/src/main/assets/adblock",
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "devDependencies": {
+    "@ghostery/adblocker": "2.20.3",
+    "esbuild": "0.28.2",
+    "tldts-experimental": "7.5.2"
+  }
+}

@@ -1,6 +1,7 @@
 *.iml
 .gradle
 /local.properties
+/tools/adblock/node_modules
 /.idea/caches
 /.idea/libraries
 /.idea/modules.xml

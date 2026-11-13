@@ -12,6 +12,7 @@ import android.webkit.RenderProcessGoneDetail
 import android.webkit.ValueCallback
 import android.webkit.WebChromeClient
 import android.webkit.WebResourceRequest
+import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.core.net.toUri
@@ -19,6 +20,7 @@ import androidx.webkit.WebSettingsCompat
 import androidx.webkit.WebViewFeature
 import com.github.livingwithhippos.webble.Feature
 import com.github.livingwithhippos.webble.LinkUtils
+import org.json.JSONObject
 
 /** What the page WebView needs from its activity. */
 interface PageCallbacks {
@@ -59,7 +61,25 @@ fun createPageWebView(context: Context, state: PageState, callbacks: PageCallbac
         }
         CookieManager.getInstance().setAcceptThirdPartyCookies(this, true)
 
+        val adBlocker = AdBlocker.get(context)
+
         webViewClient = object : WebViewClient() {
+            /** The page's URL, readable from the WebView's network threads. */
+            @Volatile
+            private var pageUrl = ""
+
+            override fun onPageStarted(view: WebView, url: String, favicon: Bitmap?) {
+                pageUrl = url
+            }
+
+            override fun shouldInterceptRequest(
+                view: WebView,
+                request: WebResourceRequest,
+            ): WebResourceResponse? {
+                if (!state.has(Feature.AD_BLOCK)) return null
+                return adBlocker.intercept(request, pageUrl)
+            }
+
             override fun shouldOverrideUrlLoading(
                 view: WebView,
                 request: WebResourceRequest,
@@ -73,6 +93,11 @@ fun createPageWebView(context: Context, state: PageState, callbacks: PageCallbac
 
             override fun onPageCommitVisible(view: WebView, url: String) {
                 if (state.desktopMode) DesktopMode.fitPage(view)
+                if (state.has(Feature.AD_BLOCK)) {
+                    adBlocker.cosmeticCss(url) { css ->
+                        if (view.url == url && state.has(Feature.AD_BLOCK)) injectStyle(view, css)
+                    }
+                }
             }
 
             override fun onPageFinished(view: WebView, url: String) {
@@ -81,6 +106,7 @@ fun createPageWebView(context: Context, state: PageState, callbacks: PageCallbac
             }
 
             override fun doUpdateVisitedHistory(view: WebView, url: String, isReload: Boolean) {
+                pageUrl = url
                 state.url = url
                 callbacks.onUrlChanged()
             }
@@ -162,3 +188,21 @@ fun createPageWebView(context: Context, state: PageState, callbacks: PageCallbac
             }
         }
     }
+
+/** Adds (or replaces) Webble's ad-hiding stylesheet on the page. */
+private fun injectStyle(webView: WebView, css: String) {
+    webView.evaluateJavascript(
+        """
+        (function(css) {
+          var style = document.getElementById('webble-adblock');
+          if (!style) {
+            style = document.createElement('style');
+            style.id = 'webble-adblock';
+            (document.head || document.documentElement).appendChild(style);
+          }
+          style.textContent = css;
+        })(${JSONObject.quote(css)});
+        """.trimIndent(),
+        null,
+    )
+}

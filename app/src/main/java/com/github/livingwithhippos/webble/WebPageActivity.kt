@@ -37,6 +37,7 @@ import com.github.livingwithhippos.webble.web.NativeApps
 import com.github.livingwithhippos.webble.web.PageCallbacks
 import com.github.livingwithhippos.webble.web.PageState
 import com.github.livingwithhippos.webble.web.ReaderMode
+import com.github.livingwithhippos.webble.web.AdBlocker
 import com.github.livingwithhippos.webble.web.createPageWebView
 import com.github.livingwithhippos.webble.web.setAlgorithmicDarkening
 import kotlinx.coroutines.Dispatchers
@@ -101,6 +102,7 @@ class WebPageActivity : ComponentActivity(), PageCallbacks, PageActions {
         history = HistoryStore.get(this)
         state.features = featurePrefs.enabled.value
 
+        if (state.has(Feature.AD_BLOCK)) AdBlocker.get(this).warmUp()
         webView = createPageWebView(this, state, this)
         onBackPressedDispatcher.addCallback(this, backCallback)
 
@@ -159,6 +161,7 @@ class WebPageActivity : ComponentActivity(), PageCallbacks, PageActions {
         }
         if (Feature.FIND_IN_PAGE !in enabled && state.findVisible) closeFind()
         if (Feature.READER_MODE !in enabled) state.readerHtml = null
+        if (Feature.AD_BLOCK in enabled) AdBlocker.get(this).warmUp()
         if (Feature.FULLSCREEN_VIDEO !in enabled && state.customView != null) exitFullscreen()
         if (Feature.LINK_MENU !in enabled) state.linkMenuUrl = null
         if (Feature.NATIVE_APP !in enabled) {
