@@ -1,0 +1,85 @@
+<resources>
+    <string name="app_name">Webble</string>
+
+    <string name="channel_pages">Pages</string>
+    <string name="channel_pages_description">Web pages opened in bubbles</string>
+    <string name="you">You</string>
+
+    <string name="no_link_found">No link found</string>
+    <string name="bubbles_off_hint">Bubbles are off. Open Webble to turn them on.</string>
+    <string name="no_app_for_link">No app can open this link</string>
+
+    <string name="action_reload">Reload</string>
+    <string name="action_share">Share</string>
+    <string name="action_open_in_browser">Open in another browser</string>
+    <string name="action_close">Close</string>
+    <string name="open_with">Open with</string>
+    <string name="share_with">Share with</string>
+
+    <string name="setup_title">Set up  Webble </string>
+    <string name="setup_intro"> Webble  opens links in floating bubbles. Allow notifications and bubbles, then make Webble your default browser, or share links to it.</string>
+    <string name="setup_notifications">Notifications</string>
+    <string name="setup_bubbles">Bubbles (choose “All conversations can bubble”)</string>
+    <string name="setup_default_browser">Default browser</string>
+    <string name="status_ok">Done</string>
+    <string name="action_allow">Allow</string>
+    <string name="action_open_settings">Settings</string>
+    <string name="action_set_default">Set</string>
+    <string name="setup_try">Try it</string>
+    <string name="setup_url_label">URL</string>
+    <string name="action_open_in_bubble">Open in bubble</string>
+    <!-- Overflow menu and page actions -->
+    <string name="action_more">More options</string>
+    <string name="action_find">Find in page</string>
+    <string name="action_reader">Reader mode</string>
+    <string name="action_desktop">Desktop site</string>
+    <string name="action_copy_link">Copy link</string>
+    <string name="action_close_all">Close all bubbles</string>
+    <string name="action_open_in_new_bubble">Open in new bubble</string>
+    <string name="action_share_link">Share link</string>
+    <string name="action_open_in_app">Open in %1$s</string>
+    <string name="action_open_in_app_generic">Open in app</string>
+    <string name="action_find_previous">Previous match</string>
+    <string name="action_find_next">Next match</string>
+    <string name="action_find_close">Close find</string>
+    <string name="find_hint">Find in page</string>
+    <string name="find_count">%1$d/%2$d</string>
+    <string name="link_copied">Link copied</string>
+    <string name="download_started">Downloading %1$s</string>
+    <string name="download_unsupported">This file can\'t be downloaded</string>
+    <string name="downloads_off">Downloads are turned off in  Webble </string>
+    <string name="reader_unavailable">Reader mode isn\'t available for this page</string>
+
+    <!-- Setup screen: features and recents -->
+    <string name="setup_features">Features</string>
+    <string name="setup_recent">Recent pages</string>
+    <string name="action_clear">Clear</string>
+    <string name="action_clear_history">Clear history</string>
+    <string name="just_now">Just now</string>
+    <string name="recent_empty">Pages you open will show up here.</string>
+
+    <string name="feature_file_uploads">File uploads</string>
+    <string name="feature_file_uploads_desc">Let pages pick files from your device</string>
+    <string name="feature_downloads">Downloads</string>
+    <string name="feature_downloads_desc">Save files to the Downloads folder</string>
+    <string name="feature_fullscreen_video">Fullscreen video</string>
+    <string name="feature_fullscreen_video_desc">Allow videos to go fullscreen</string>
+    <string name="feature_dark_pages">Dark pages</string>
+    <string name="feature_dark_pages_desc">Darken pages when the system is in dark mode</string>
+    <string name="feature_link_menu">Link menu</string>
+    <string name="feature_link_menu_desc">Long-press a link to open it in a new bubble or copy it</string>
+    <string name="feature_reuse_bubbles">Reuse bubbles</string>
+    <string name="feature_reuse_bubbles_desc">Opening a link that is already in a bubble expands that bubble</string>
+    <string name="feature_close_all">Close all</string>
+    <string name="feature_close_all_desc">Show a button that closes every bubble</string>
+    <string name="feature_recent_pages">Recent pages</string>
+    <string name="feature_recent_pages_desc">Keep a list of pages you opened</string>
+    <string name="feature_native_app">Open in app</string>
+    <string name="feature_native_app_desc">Show a button when an installed app can open the page</string>
+    <string name="feature_desktop_site">Desktop site</string>
+    <string name="feature_desktop_site_desc">Offer to load the desktop version of pages</string>
+    <string name="feature_find_in_page">Find in page</string>
+    <string name="feature_find_in_page_desc">Search for text on the page</string>
+    <string name="feature_reader_mode">Reader mode</string>
+    <string name="feature_reader_mode_desc">Show articles as clean, readable text</string>
+</resources>

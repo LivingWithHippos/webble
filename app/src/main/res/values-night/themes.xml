@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- A dark app theme also lets the WebView darken pages (algorithmic darkening). -->
+    <style name="Theme.Webble" parent="android:Theme.Material.NoActionBar" />
+</resources>
