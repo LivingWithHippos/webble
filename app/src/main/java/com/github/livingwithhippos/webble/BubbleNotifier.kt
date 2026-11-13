@@ -214,6 +214,9 @@ class BubbleNotifier(context: Context) {
             )
             .setContentTitle(label)
             .setContentText(url)
+            // Also what makes an icon-only update count as a visible change: without it the
+            // system doesn't pass the update to the bubble, which keeps its old icon.
+            .setLargeIcon(favicon)
             .setSmallIcon(R.drawable.ic_bubble)
             .setCategory(Notification.CATEGORY_MESSAGE)
             .setShortcutId(shortcutId)

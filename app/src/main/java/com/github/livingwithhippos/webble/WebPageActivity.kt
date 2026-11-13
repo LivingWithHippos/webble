@@ -6,6 +6,7 @@ import android.content.ClipboardManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -33,6 +34,7 @@ import com.github.livingwithhippos.webble.ui.WebPageScreen
 import com.github.livingwithhippos.webble.ui.theme.WebbleTheme
 import com.github.livingwithhippos.webble.web.DesktopMode
 import com.github.livingwithhippos.webble.web.Downloads
+import com.github.livingwithhippos.webble.web.Favicons
 import com.github.livingwithhippos.webble.web.NativeApps
 import com.github.livingwithhippos.webble.web.PageCallbacks
 import com.github.livingwithhippos.webble.web.PageState
@@ -77,6 +79,10 @@ class WebPageActivity : ComponentActivity(), PageCallbacks, PageActions {
 
     private var updateJob: Job? = null
     private var nativeAppJob: Job? = null
+    private var iconJob: Job? = null
+
+    /** The site's icon from Favicons (host to icon): better than WebView's onReceivedIcon. */
+    private var siteIcon: Pair<String, Bitmap>? = null
 
     private var fileCallback: ValueCallback<Array<Uri>>? = null
     private val fileChooser =
@@ -259,8 +265,23 @@ class WebPageActivity : ComponentActivity(), PageCallbacks, PageActions {
             delay(700)
             if (state.has(Feature.RECENT_PAGES)) history.add(state.url, state.title)
             if (inBubble && linkId != -1) {
-                notifier.updateBubble(linkId, state.url, state.title, state.favicon)
+                val host = state.url.toUri().host
+                val icon = siteIcon?.takeIf { it.first == host }?.second ?: state.favicon
+                notifier.updateBubble(linkId, state.url, state.title, icon)
             }
+        }
+    }
+
+    /** Looks for a better bubble icon than WebView's, once per site. */
+    override fun onPageFinished(url: String) {
+        if (!inBubble || linkId == -1) return
+        val host = url.toUri().host ?: return
+        if (siteIcon?.first == host || iconJob?.isActive == true) return
+        iconJob = lifecycleScope.launch {
+            val icon = Favicons.find(webView, url) ?: return@launch
+            if (state.url.toUri().host != host) return@launch
+            siteIcon = host to icon
+            onPageInfoChanged()
         }
     }
 

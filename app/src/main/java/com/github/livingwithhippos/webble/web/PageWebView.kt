@@ -34,6 +34,9 @@ interface PageCallbacks {
     fun onOpenExternally(uri: Uri)
     fun onUrlChanged()
     fun onPageInfoChanged()
+
+    /** The page finished loading: its DOM (and icon links) can be read. */
+    fun onPageFinished(url: String)
     fun onShowFullscreen(view: View, callback: WebChromeClient.CustomViewCallback)
     fun onHideFullscreen()
 
@@ -103,6 +106,7 @@ fun createPageWebView(context: Context, state: PageState, callbacks: PageCallbac
             override fun onPageFinished(view: WebView, url: String) {
                 // Again at the end, in case the page replaced its viewport while loading.
                 if (state.desktopMode) DesktopMode.fitPage(view)
+                callbacks.onPageFinished(url)
             }
 
             override fun doUpdateVisitedHistory(view: WebView, url: String, isReload: Boolean) {
