@@ -19,17 +19,14 @@ import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
@@ -55,6 +52,16 @@ import androidx.core.net.toUri
 import com.github.livingwithhippos.webble.Feature
 import com.github.livingwithhippos.webble.R
 import com.github.livingwithhippos.webble.web.PageState
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.StrokeCap
+import androidx.compose.ui.zIndex
+import com.github.livingwithhippos.webble.ui.theme.Coral
+import com.github.livingwithhippos.webble.ui.theme.Ink
+import com.github.livingwithhippos.webble.ui.theme.Mint
+import com.github.livingwithhippos.webble.ui.theme.Periwinkle
 
 /** What the page UI can ask the activity to do. */
 interface PageActions {
@@ -85,22 +92,40 @@ fun WebPageScreen(
     actions: PageActions,
 ) {
     Box(modifier = Modifier.fillMaxSize()) {
-        Surface(modifier = Modifier.fillMaxSize()) {
+        Surface(color = MaterialTheme.colorScheme.background, modifier = Modifier.fillMaxSize()) {
             Column(modifier = Modifier.windowInsetsPadding(WindowInsets.safeDrawing)) {
-                Surface(tonalElevation = 3.dp) {
-                    if (state.findVisible) {
-                        FindBar(state, actions)
-                    } else {
-                        TopBar(state, actions)
+                Surface(
+                    color = MaterialTheme.colorScheme.surface,
+                    shape = RoundedCornerShape(bottomStart = 28.dp, bottomEnd = 28.dp),
+                    shadowElevation = 2.dp,
+                    modifier = Modifier.zIndex(1f),
+                ) {
+                    Column {
+                        if (state.findVisible) {
+                            FindBar(state, actions)
+                        } else {
+                            TopBar(state, actions)
+                        }
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(4.dp)
+                                .padding(horizontal = 24.dp),
+                        ) {
+                            if (state.progress in 0..99) {
+                                LinearProgressIndicator(
+                                    progress = { state.progress / 100f },
+                                    color = Coral,
+                                    trackColor = MaterialTheme.colorScheme.surfaceVariant,
+                                    strokeCap = StrokeCap.Round,
+                                    gapSize = 0.dp,
+                                    drawStopIndicator = {},
+                                    modifier = Modifier.fillMaxSize(),
+                                )
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
                     }
-                }
-                if (state.progress in 0..99) {
-                    LinearProgressIndicator(
-                        progress = { state.progress / 100f },
-                        modifier = Modifier.fillMaxWidth(),
-                    )
-                } else {
-                    Spacer(modifier = Modifier.height(4.dp))
                 }
                 Box(
                     modifier = Modifier
@@ -139,25 +164,25 @@ fun WebPageScreen(
 private fun TopBar(state: PageState, actions: PageActions) {
     Row(
         verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(start = 16.dp, end = 4.dp),
+            .padding(start = 20.dp, end = 12.dp, top = 12.dp, bottom = 8.dp),
     ) {
         Column(modifier = Modifier.weight(1f)) {
             val host = state.url.toUri().host.orEmpty()
             Text(
                 text = state.title.ifBlank { host.ifBlank { state.url } },
-                style = MaterialTheme.typography.titleSmall,
+                style = MaterialTheme.typography.titleMedium,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
             if (host.isNotBlank()) {
-                Text(
-                    text = host,
-                    style = MaterialTheme.typography.labelSmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
+                Spacer(Modifier.height(4.dp))
+                StatPill(
+                    text = host.removePrefix("www."),
+                    container = Periwinkle.copy(alpha = 0.22f),
+                    content = MaterialTheme.colorScheme.onSurface,
                 )
             }
         }
@@ -165,21 +190,35 @@ private fun TopBar(state: PageState, actions: PageActions) {
         if (app != null && state.has(Feature.NATIVE_APP)) {
             val label = app.label?.let { stringResource(R.string.action_open_in_app, it) }
                 ?: stringResource(R.string.action_open_in_app_generic)
-            IconButton(onClick = actions::openNativeApp) {
-                if (app.icon != null) {
-                    Image(
-                        bitmap = app.icon.asImageBitmap(),
-                        contentDescription = label,
-                        modifier = Modifier.size(24.dp),
-                    )
-                } else {
-                    Icon(painterResource(R.drawable.ic_open_in_new), contentDescription = label)
+            if (app.icon != null) {
+                Surface(
+                    onClick = actions::openNativeApp,
+                    shape = CircleShape,
+                    color = MaterialTheme.colorScheme.surfaceVariant,
+                    modifier = Modifier.size(BUTTON_SIZE),
+                ) {
+                    Box(contentAlignment = Alignment.Center) {
+                        Image(
+                            bitmap = app.icon.asImageBitmap(),
+                            contentDescription = label,
+                            modifier = Modifier.size(22.dp),
+                        )
+                    }
                 }
+            } else {
+                ToolbarButton(R.drawable.ic_open_in_new, label, actions::openNativeApp)
             }
         }
-        ToolbarButton(R.drawable.ic_refresh, R.string.action_reload, actions::reload)
+        ToolbarButton(R.drawable.ic_refresh, stringResource(R.string.action_reload), actions::reload)
         OverflowMenu(state, actions)
-        ToolbarButton(R.drawable.ic_close, R.string.action_close, actions::close)
+        RoundIconButton(
+            icon = R.drawable.ic_close,
+            contentDescription = stringResource(R.string.action_close),
+            container = Coral,
+            content = Color.White,
+            size = BUTTON_SIZE,
+            onClick = actions::close,
+        )
     }
 }
 
@@ -187,8 +226,15 @@ private fun TopBar(state: PageState, actions: PageActions) {
 private fun OverflowMenu(state: PageState, actions: PageActions) {
     var expanded by remember { mutableStateOf(false) }
     Box {
-        ToolbarButton(R.drawable.ic_more_vert, R.string.action_more) { expanded = true }
-        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+        ToolbarButton(R.drawable.ic_more_vert, stringResource(R.string.action_more)) {
+            expanded = true
+        }
+        DropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false },
+            shape = MaterialTheme.shapes.medium,
+            containerColor = MaterialTheme.colorScheme.surface,
+        ) {
             fun pick(action: () -> Unit) {
                 expanded = false
                 action()
@@ -202,18 +248,21 @@ private fun OverflowMenu(state: PageState, actions: PageActions) {
             if (state.has(Feature.READER_MODE)) {
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.action_reader)) },
-                    trailingIcon = { Checkbox(checked = state.readerHtml != null, onCheckedChange = null) },
+                    trailingIcon = { OnOffPill(state.readerHtml != null) },
                     onClick = { pick(actions::toggleReader) },
                 )
             }
             if (state.has(Feature.DESKTOP_SITE)) {
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.action_desktop)) },
-                    trailingIcon = { Checkbox(checked = state.desktopMode, onCheckedChange = null) },
+                    trailingIcon = { OnOffPill(state.desktopMode) },
                     onClick = { pick(actions::toggleDesktop) },
                 )
             }
-            HorizontalDivider()
+            HorizontalDivider(
+                color = MaterialTheme.colorScheme.outlineVariant,
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+            )
             DropdownMenuItem(
                 text = { Text(stringResource(R.string.action_copy_link)) },
                 onClick = { pick { actions.copyLink(state.url) } },
@@ -227,7 +276,10 @@ private fun OverflowMenu(state: PageState, actions: PageActions) {
                 onClick = { pick { actions.openInOtherBrowser(state.url) } },
             )
             if (state.has(Feature.CLOSE_ALL)) {
-                HorizontalDivider()
+                HorizontalDivider(
+                color = MaterialTheme.colorScheme.outlineVariant,
+                modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+            )
                 DropdownMenuItem(
                     text = { Text(stringResource(R.string.action_close_all)) },
                     onClick = { pick(actions::closeAll) },
@@ -243,20 +295,35 @@ private fun FindBar(state: PageState, actions: PageActions) {
     LaunchedEffect(Unit) { focusRequester.requestFocus() }
     Row(
         verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(6.dp),
         modifier = Modifier
             .fillMaxWidth()
-            .padding(end = 4.dp),
+            .padding(start = 12.dp, end = 12.dp, top = 12.dp, bottom = 8.dp),
     ) {
         TextField(
             value = state.findQuery,
             onValueChange = actions::find,
             placeholder = { Text(stringResource(R.string.find_hint)) },
             singleLine = true,
+            shape = CircleShape,
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
             keyboardActions = KeyboardActions(onSearch = { actions.findNext(true) }),
+            trailingIcon = if (state.findQuery.isNotEmpty()) {
+                {
+                    StatPill(
+                        text = stringResource(R.string.find_count, state.findCurrent, state.findTotal),
+                        container = MaterialTheme.colorScheme.inverseSurface,
+                        content = MaterialTheme.colorScheme.inverseOnSurface,
+                        modifier = Modifier.padding(end = 8.dp),
+                    )
+                }
+            } else {
+                null
+            },
             colors = TextFieldDefaults.colors(
-                focusedContainerColor = Color.Transparent,
-                unfocusedContainerColor = Color.Transparent,
+                focusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                unfocusedContainerColor = MaterialTheme.colorScheme.surfaceVariant,
+                cursorColor = Coral,
                 focusedIndicatorColor = Color.Transparent,
                 unfocusedIndicatorColor = Color.Transparent,
             ),
@@ -264,20 +331,20 @@ private fun FindBar(state: PageState, actions: PageActions) {
                 .weight(1f)
                 .focusRequester(focusRequester),
         )
-        if (state.findQuery.isNotEmpty()) {
-            Text(
-                text = stringResource(R.string.find_count, state.findCurrent, state.findTotal),
-                style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        ToolbarButton(R.drawable.ic_arrow_up, R.string.action_find_previous) {
+        ToolbarButton(R.drawable.ic_arrow_up, stringResource(R.string.action_find_previous)) {
             actions.findNext(false)
         }
-        ToolbarButton(R.drawable.ic_arrow_down, R.string.action_find_next) {
+        ToolbarButton(R.drawable.ic_arrow_down, stringResource(R.string.action_find_next)) {
             actions.findNext(true)
         }
-        ToolbarButton(R.drawable.ic_close, R.string.action_find_close, actions::closeFind)
+        RoundIconButton(
+            icon = R.drawable.ic_close,
+            contentDescription = stringResource(R.string.action_find_close),
+            container = Coral,
+            content = Color.White,
+            size = BUTTON_SIZE,
+            onClick = actions::closeFind,
+        )
     }
 }
 
@@ -289,17 +356,25 @@ private fun LinkMenu(url: String, actions: PageActions) {
     }
     AlertDialog(
         onDismissRequest = actions::dismissLinkMenu,
+        shape = MaterialTheme.shapes.large,
+        containerColor = MaterialTheme.colorScheme.surface,
         title = {
             Text(
                 text = url,
                 style = MaterialTheme.typography.bodyMedium,
                 maxLines = 3,
                 overflow = TextOverflow.Ellipsis,
+                modifier = Modifier
+                    .clip(MaterialTheme.shapes.small)
+                    .background(Periwinkle.copy(alpha = 0.22f))
+                    .padding(horizontal = 12.dp, vertical = 8.dp),
             )
         },
         text = {
-            Column {
-                MenuEntry(R.string.action_open_in_new_bubble) { pick { actions.openInNewBubble(url) } }
+            Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                MenuEntry(R.string.action_open_in_new_bubble, highlighted = true) {
+                    pick { actions.openInNewBubble(url) }
+                }
                 MenuEntry(R.string.action_copy_link) { pick { actions.copyLink(url) } }
                 MenuEntry(R.string.action_share_link) { pick { actions.share(url) } }
                 MenuEntry(R.string.action_open_in_browser) { pick { actions.openInOtherBrowser(url) } }
@@ -310,19 +385,51 @@ private fun LinkMenu(url: String, actions: PageActions) {
 }
 
 @Composable
-private fun MenuEntry(label: Int, onClick: () -> Unit) {
-    TextButton(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
-        Text(
-            text = stringResource(label),
-            modifier = Modifier.fillMaxWidth(),
-            style = MaterialTheme.typography.bodyLarge,
-        )
+private fun MenuEntry(label: Int, highlighted: Boolean = false, onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        shape = MaterialTheme.shapes.medium,
+        color = if (highlighted) Coral else MaterialTheme.colorScheme.surfaceVariant,
+        contentColor = if (highlighted) Color.White else MaterialTheme.colorScheme.onSurface,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(start = 16.dp, end = 12.dp, top = 12.dp, bottom = 12.dp),
+        ) {
+            Text(
+                text = stringResource(label),
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.weight(1f),
+            )
+            Icon(
+                painter = painterResource(R.drawable.ic_arrow_forward),
+                contentDescription = null,
+                modifier = Modifier.size(18.dp),
+            )
+        }
     }
 }
 
 @Composable
-private fun ToolbarButton(icon: Int, label: Int, onClick: () -> Unit) {
-    IconButton(onClick = onClick) {
-        Icon(painter = painterResource(icon), contentDescription = stringResource(label))
-    }
+private fun OnOffPill(on: Boolean) {
+    StatPill(
+        text = stringResource(if (on) R.string.status_on else R.string.status_off),
+        container = if (on) Mint else MaterialTheme.colorScheme.surfaceVariant,
+        content = if (on) Ink else MaterialTheme.colorScheme.onSurfaceVariant,
+    )
+}
+
+private val BUTTON_SIZE = 36.dp
+
+@Composable
+private fun ToolbarButton(icon: Int, label: String, onClick: () -> Unit) {
+    RoundIconButton(
+        icon = icon,
+        contentDescription = label,
+        container = MaterialTheme.colorScheme.surfaceVariant,
+        content = MaterialTheme.colorScheme.onSurface,
+        size = BUTTON_SIZE,
+        onClick = onClick,
+    )
 }

@@ -16,12 +16,10 @@ import com.github.livingwithhippos.webble.FeaturePrefs
 import com.github.livingwithhippos.webble.Feature
 import androidx.core.net.toUri
 import androidx.compose.ui.text.style.TextOverflow
-import androidx.compose.ui.res.painterResource
 import androidx.compose.runtime.collectAsState
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.Switch
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.Icon
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.layout.PaddingValues
@@ -33,9 +31,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -56,6 +52,26 @@ import androidx.core.content.getSystemService
 import com.github.livingwithhippos.webble.BubbleNotifier
 import com.github.livingwithhippos.webble.LinkUtils
 import com.github.livingwithhippos.webble.R
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Surface
+import androidx.compose.material3.TextField
+import androidx.compose.material3.TextFieldDefaults
+import androidx.compose.runtime.key
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
+import com.github.livingwithhippos.webble.ui.theme.Coral
+import com.github.livingwithhippos.webble.ui.theme.Ink
+import com.github.livingwithhippos.webble.ui.theme.Mint
+import com.github.livingwithhippos.webble.ui.theme.Mustard
+import com.github.livingwithhippos.webble.ui.theme.Periwinkle
 
 @Composable
 fun SetupScreen(refreshKey: Int, onOpenLink: (Uri) -> Unit) {
@@ -95,99 +111,164 @@ fun SetupScreen(refreshKey: Int, onOpenLink: (Uri) -> Unit) {
     var url by rememberSaveable { mutableStateOf("https://developer.android.com") }
     val openTyped = { LinkUtils.normalize(url)?.let(onOpenLink) }
 
-    Scaffold(modifier = Modifier.fillMaxSize()) { padding ->
+    val setupDone = listOf(notificationsOk, bubblesOk, isDefaultBrowser).count { it }
+
+    Scaffold(
+        modifier = Modifier.fillMaxSize(),
+        containerColor = MaterialTheme.colorScheme.background,
+    ) { padding ->
         LazyColumn(
             contentPadding = PaddingValues(horizontal = 16.dp, vertical = 24.dp),
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(12.dp),
             modifier = Modifier.padding(padding),
         ) {
             item {
-                Text(
-                    stringResource(R.string.setup_title),
-                    style = MaterialTheme.typography.headlineMedium,
-                )
-            }
-            item {
-                Text(stringResource(R.string.setup_intro), style = MaterialTheme.typography.bodyMedium)
-            }
-
-            item {
-                SetupRow(
-                    label = stringResource(R.string.setup_notifications),
-                    done = notificationsOk,
-                    action = stringResource(R.string.action_allow),
-                ) {
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-                        permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
-                    } else {
-                        openNotificationSettings()
-                    }
-                }
-            }
-            item {
-                SetupRow(
-                    label = stringResource(R.string.setup_bubbles),
-                    done = bubblesOk,
-                    action = stringResource(R.string.action_open_settings),
-                ) {
-                    context.startActivity(
-                        Intent(Settings.ACTION_APP_NOTIFICATION_BUBBLE_SETTINGS)
-                            .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName),
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Heading(
+                        stringResource(R.string.app_name),
+                        large = true,
+                        modifier = Modifier.weight(1f),
+                    )
+                    StatPill(
+                        text = stringResource(R.string.setup_ready_count, setupDone, 3),
+                        container = if (setupDone == 3) Mint else Coral,
+                        content = if (setupDone == 3) Ink else Color.White,
+                        icon = if (setupDone == 3) R.drawable.ic_check else null,
                     )
                 }
             }
             item {
-                SetupRow(
-                    label = stringResource(R.string.setup_default_browser),
-                    done = isDefaultBrowser,
-                    action = stringResource(R.string.action_set_default),
-                ) {
-                    if (roleManager?.isRoleAvailable(RoleManager.ROLE_BROWSER) == true) {
-                        roleLauncher.launch(
-                            roleManager.createRequestRoleIntent(RoleManager.ROLE_BROWSER),
-                        )
-                    } else {
-                        context.startActivity(Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS))
-                    }
-                }
-            }
-
-            item { SectionTitle(stringResource(R.string.setup_try)) }
-            item {
-                OutlinedTextField(
-                    value = url,
-                    onValueChange = { url = it },
-                    label = { Text(stringResource(R.string.setup_url_label)) },
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Uri,
-                        imeAction = ImeAction.Go,
-                    ),
-                    keyboardActions = KeyboardActions(onGo = { openTyped() }),
-                    modifier = Modifier.fillMaxWidth(),
+                Text(
+                    stringResource(R.string.setup_intro),
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
+
             item {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Button(onClick = { openTyped() }) {
-                        Text(stringResource(R.string.action_open_in_bubble))
+                // Always dark, in both themes: the "hero" card.
+                ColorBlockCard(color = Ink, contentColor = Color.White) {
+                    SetupRow(
+                        label = stringResource(R.string.setup_notifications),
+                        done = notificationsOk,
+                        action = stringResource(R.string.action_allow),
+                    ) {
+                        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                            permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        } else {
+                            openNotificationSettings()
+                        }
                     }
-                    if (Feature.CLOSE_ALL in enabled) {
-                        OutlinedButton(onClick = { notifier.removeAll() }) {
-                            Text(stringResource(R.string.action_close_all))
+                    CardDivider()
+                    SetupRow(
+                        label = stringResource(R.string.setup_bubbles),
+                        done = bubblesOk,
+                        action = stringResource(R.string.action_open_settings),
+                    ) {
+                        context.startActivity(
+                            Intent(Settings.ACTION_APP_NOTIFICATION_BUBBLE_SETTINGS)
+                                .putExtra(Settings.EXTRA_APP_PACKAGE, context.packageName),
+                        )
+                    }
+                    CardDivider()
+                    SetupRow(
+                        label = stringResource(R.string.setup_default_browser),
+                        done = isDefaultBrowser,
+                        action = stringResource(R.string.action_set_default),
+                    ) {
+                        if (roleManager?.isRoleAvailable(RoleManager.ROLE_BROWSER) == true) {
+                            roleLauncher.launch(
+                                roleManager.createRequestRoleIntent(RoleManager.ROLE_BROWSER),
+                            )
+                        } else {
+                            context.startActivity(Intent(Settings.ACTION_MANAGE_DEFAULT_APPS_SETTINGS))
                         }
                     }
                 }
             }
 
-            item { SectionTitle(stringResource(R.string.setup_features)) }
+            item {
+                ColorBlockCard(color = Periwinkle, contentColor = Ink) {
+                    Heading(stringResource(R.string.setup_try))
+                    Spacer(Modifier.height(12.dp))
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        TextField(
+                            value = url,
+                            onValueChange = { url = it },
+                            placeholder = { Text(stringResource(R.string.setup_url_label)) },
+                            singleLine = true,
+                            shape = CircleShape,
+                            colors = TextFieldDefaults.colors(
+                                focusedContainerColor = Color.White,
+                                unfocusedContainerColor = Color.White,
+                                focusedTextColor = Ink,
+                                unfocusedTextColor = Ink,
+                                cursorColor = Coral,
+                                focusedIndicatorColor = Color.Transparent,
+                                unfocusedIndicatorColor = Color.Transparent,
+                            ),
+                            keyboardOptions = KeyboardOptions(
+                                keyboardType = KeyboardType.Uri,
+                                imeAction = ImeAction.Go,
+                            ),
+                            keyboardActions = KeyboardActions(onGo = { openTyped() }),
+                            modifier = Modifier.weight(1f),
+                        )
+                        Spacer(Modifier.width(8.dp))
+                        RoundIconButton(
+                            icon = R.drawable.ic_arrow_forward,
+                            contentDescription = stringResource(R.string.action_open_in_bubble),
+                            container = Coral,
+                            content = Color.White,
+                            size = 52.dp,
+                            onClick = { openTyped() },
+                        )
+                    }
+                    if (Feature.CLOSE_ALL in enabled) {
+                        Spacer(Modifier.height(12.dp))
+                        OutlinedButton(
+                            onClick = { notifier.removeAll() },
+                            shape = CircleShape,
+                            border = BorderStroke(1.5.dp, Ink),
+                            colors = ButtonDefaults.outlinedButtonColors(contentColor = Ink),
+                        ) {
+                            Text(
+                                stringResource(R.string.action_close_all).uppercase(),
+                                style = MaterialTheme.typography.labelLarge,
+                            )
+                        }
+                    }
+                }
+            }
+
+            item {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.padding(top = 12.dp),
+                ) {
+                    Heading(stringResource(R.string.setup_features), Modifier.weight(1f))
+                    StatPill(
+                        text = stringResource(
+                            R.string.features_on_count,
+                            enabled.size,
+                            Feature.entries.size,
+                        ),
+                        container = MaterialTheme.colorScheme.inverseSurface,
+                        content = MaterialTheme.colorScheme.inverseOnSurface,
+                    )
+                }
+            }
             items(Feature.entries, key = { it.key }) { feature ->
                 FeatureRow(
                     feature = feature,
                     checked = feature in enabled,
                     onCheckedChange = { featurePrefs.setEnabled(feature, it) },
                     extra = if (feature == Feature.RECENT_PAGES && history.isNotEmpty()) {
-                        { TextButton(onClick = historyStore::clear) { Text(stringResource(R.string.action_clear_history)) } }
+                        {
+                            TextButton(onClick = historyStore::clear) {
+                                Text(stringResource(R.string.action_clear_history))
+                            }
+                        }
                     } else {
                         null
                     },
@@ -196,26 +277,35 @@ fun SetupScreen(refreshKey: Int, onOpenLink: (Uri) -> Unit) {
 
             if (Feature.RECENT_PAGES in enabled) {
                 item {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        SectionTitle(stringResource(R.string.setup_recent), Modifier.weight(1f))
-                        if (history.isNotEmpty()) {
-                            TextButton(onClick = historyStore::clear) {
-                                Text(stringResource(R.string.action_clear))
+                    ColorBlockCard(
+                        color = Mustard,
+                        contentColor = Ink,
+                        modifier = Modifier.padding(top = 12.dp),
+                    ) {
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Heading(stringResource(R.string.setup_recent), Modifier.weight(1f))
+                            if (history.isNotEmpty()) {
+                                PillButton(
+                                    text = stringResource(R.string.action_clear),
+                                    onClick = historyStore::clear,
+                                    container = Ink,
+                                    content = Color.White,
+                                )
+                            }
+                        }
+                        Spacer(Modifier.height(8.dp))
+                        if (history.isEmpty()) {
+                            Text(
+                                stringResource(R.string.recent_empty),
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                        }
+                        history.forEach { entry ->
+                            key(entry.url + entry.timestamp) {
+                                HistoryRow(entry) { onOpenLink(entry.url.toUri()) }
                             }
                         }
                     }
-                }
-                if (history.isEmpty()) {
-                    item {
-                        Text(
-                            stringResource(R.string.recent_empty),
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-                items(history, key = { it.url + it.timestamp }) { entry ->
-                    HistoryRow(entry) { onOpenLink(entry.url.toUri()) }
                 }
             }
         }
@@ -223,8 +313,11 @@ fun SetupScreen(refreshKey: Int, onOpenLink: (Uri) -> Unit) {
 }
 
 @Composable
-private fun SectionTitle(text: String, modifier: Modifier = Modifier) {
-    Text(text, style = MaterialTheme.typography.titleMedium, modifier = modifier)
+private fun CardDivider() {
+    HorizontalDivider(
+        color = Color.White.copy(alpha = 0.12f),
+        modifier = Modifier.padding(vertical = 4.dp),
+    )
 }
 
 @Composable
@@ -234,76 +327,109 @@ private fun FeatureRow(
     onCheckedChange: (Boolean) -> Unit,
     extra: (@Composable () -> Unit)?,
 ) {
-    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-        Column(modifier = Modifier.weight(1f)) {
-            Text(stringResource(feature.title), style = MaterialTheme.typography.bodyLarge)
-            Text(
-                stringResource(feature.description),
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+    Surface(
+        shape = MaterialTheme.shapes.medium,
+        color = MaterialTheme.colorScheme.surface,
+        modifier = Modifier.fillMaxWidth(),
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    stringResource(feature.title),
+                    style = MaterialTheme.typography.titleMedium,
+                )
+                Text(
+                    stringResource(feature.description),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                // Shown when the feature is off, so old history can still be removed.
+                if (!checked) extra?.invoke()
+            }
+            Switch(
+                checked = checked,
+                onCheckedChange = onCheckedChange,
+                colors = webbleSwitchColors(),
+                modifier = Modifier.padding(start = 12.dp),
             )
-            // Shown when the feature is off, so old history can still be removed.
-            if (!checked) extra?.invoke()
         }
-        Switch(
-            checked = checked,
-            onCheckedChange = onCheckedChange,
-            modifier = Modifier.padding(start = 12.dp),
-        )
     }
 }
 
 @Composable
 private fun HistoryRow(entry: HistoryEntry, onClick: () -> Unit) {
+    val host = entry.url.toUri().host.orEmpty()
     Row(
         verticalAlignment = Alignment.CenterVertically,
         modifier = Modifier
             .fillMaxWidth()
+            .clip(MaterialTheme.shapes.small)
             .clickable(onClick = onClick)
-            .padding(vertical = 4.dp),
+            .padding(vertical = 8.dp),
     ) {
-        Icon(
-            painter = painterResource(R.drawable.ic_history),
-            contentDescription = null,
-            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(end = 16.dp),
-        )
-        Column(modifier = Modifier.weight(1f)) {
+        LetterAvatar(host, Modifier.border(1.5.dp, Ink, CircleShape))
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(horizontal = 12.dp),
+        ) {
             Text(
                 entry.title,
-                style = MaterialTheme.typography.bodyLarge,
+                style = MaterialTheme.typography.titleMedium,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
             Text(
-                text = "${entry.url.toUri().host.orEmpty()} · " +
+                text = "$host · " +
                     if (System.currentTimeMillis() - entry.timestamp < DateUtils.MINUTE_IN_MILLIS) {
                         stringResource(R.string.just_now)
                     } else {
                         DateUtils.getRelativeTimeSpanString(entry.timestamp)
                     },
                 style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                color = Ink.copy(alpha = 0.7f),
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
         }
+        RoundIconButton(
+            icon = R.drawable.ic_arrow_forward,
+            contentDescription = null,
+            container = Ink,
+            content = Color.White,
+            size = 32.dp,
+            onClick = onClick,
+        )
     }
 }
 
 @Composable
 private fun SetupRow(label: String, done: Boolean, action: String, onClick: () -> Unit) {
-    Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.fillMaxWidth()) {
-        Text(label, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.weight(1f))
+    Row(
+        verticalAlignment = Alignment.CenterVertically,
+        modifier = Modifier
+            .fillMaxWidth()
+            .heightIn(min = 52.dp),
+    ) {
+        Text(
+            label,
+            style = MaterialTheme.typography.bodyLarge,
+            modifier = Modifier
+                .weight(1f)
+                .padding(end = 12.dp),
+        )
         if (done) {
-            Text(
-                stringResource(R.string.status_ok),
-                color = MaterialTheme.colorScheme.primary,
-                style = MaterialTheme.typography.labelLarge,
-                modifier = Modifier.padding(horizontal = 12.dp),
+            StatPill(
+                text = stringResource(R.string.status_ok),
+                container = Mint,
+                content = Ink,
+                icon = R.drawable.ic_check,
             )
         } else {
-            Button(onClick = onClick) { Text(action) }
+            PillButton(text = action, onClick = onClick, trailingIcon = R.drawable.ic_arrow_forward)
         }
     }
 }
