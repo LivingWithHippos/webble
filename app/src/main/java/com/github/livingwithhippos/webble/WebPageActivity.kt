@@ -40,6 +40,7 @@ import com.github.livingwithhippos.webble.web.PageCallbacks
 import com.github.livingwithhippos.webble.web.PageState
 import com.github.livingwithhippos.webble.web.ReaderMode
 import com.github.livingwithhippos.webble.web.AdBlocker
+import com.github.livingwithhippos.webble.web.ClearUrls
 import com.github.livingwithhippos.webble.web.createPageWebView
 import com.github.livingwithhippos.webble.web.setAlgorithmicDarkening
 import kotlinx.coroutines.Dispatchers
@@ -382,7 +383,7 @@ class WebPageActivity : ComponentActivity(), PageCallbacks, PageActions {
     override fun share(url: String) {
         val send = Intent(Intent.ACTION_SEND)
             .setType("text/plain")
-            .putExtra(Intent.EXTRA_TEXT, url)
+            .putExtra(Intent.EXTRA_TEXT, ClearUrls.clean(this, url))
         if (url == state.url) send.putExtra(Intent.EXTRA_SUBJECT, state.title)
         startActivity(
             Intent.createChooser(send, getString(R.string.share_with))
@@ -391,7 +392,7 @@ class WebPageActivity : ComponentActivity(), PageCallbacks, PageActions {
     }
 
     override fun copyLink(url: String) {
-        getSystemService<ClipboardManager>()?.setPrimaryClip(ClipData.newPlainText("URL", url))
+        getSystemService<ClipboardManager>()?.setPrimaryClip(ClipData.newPlainText("URL", ClearUrls.clean(this, url)))
         // Android 13+ shows its own confirmation.
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) toast(R.string.link_copied)
     }

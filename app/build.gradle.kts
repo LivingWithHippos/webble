@@ -48,6 +48,8 @@ dependencies {
     implementation(libs.androidx.webkit)
     implementation(libs.androidx.javascriptengine)
     testImplementation(libs.junit)
+    // Android's org.json is a stub in JVM tests.
+    testImplementation(libs.org.json)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)
     androidTestImplementation(libs.androidx.espresso.core)

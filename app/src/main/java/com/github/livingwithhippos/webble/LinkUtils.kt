@@ -8,6 +8,7 @@ import android.util.Patterns
 import android.widget.Toast
 import androidx.core.content.edit
 import androidx.core.net.toUri
+import com.github.livingwithhippos.webble.web.ClearUrls
 
 object LinkUtils {
 
@@ -66,14 +67,16 @@ object LinkUtils {
     }
 
     /**
-     * Opens [url] in a bubble. Call this while [activity] is in the foreground so the bubble can
-     * expand automatically. If the page is already in a bubble (and reusing is on), that bubble is
-     * brought forward instead of making a duplicate. Falls back to a full screen page when bubbles
-     * are not allowed.
+     * Opens [link] in a bubble, without its tracking parameters when "Clean links" is on. Call
+     * this while [activity] is in the foreground so the bubble can expand automatically. If the
+     * page is already in a bubble (and reusing is on), that bubble is brought forward instead of
+     * making a duplicate. Falls back to a full screen page when bubbles are not allowed.
      *
      * @param expand false adds the bubble to the stack without opening it ("read later").
      */
-    fun openLink(activity: Activity, url: Uri, expand: Boolean = true) {
+    fun openLink(activity: Activity, link: Uri, expand: Boolean = true) {
+        // Cleaned first, so a tracked and a clean copy of a page share one bubble.
+        val url = ClearUrls.clean(activity, link.toString()).toUri()
         val notifier = BubbleNotifier(activity)
         notifier.ensureChannel()
         if (!notifier.canBubble()) {

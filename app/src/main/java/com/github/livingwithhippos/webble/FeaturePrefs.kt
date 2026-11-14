@@ -34,6 +34,7 @@ enum class Feature(
     FIND_IN_PAGE("find_in_page", R.string.feature_find_in_page, R.string.feature_find_in_page_desc),
     READER_MODE("reader_mode", R.string.feature_reader_mode, R.string.feature_reader_mode_desc),
     AD_BLOCK("ad_block", R.string.feature_ad_block, R.string.feature_ad_block_desc),
+    CLEAN_LINKS("clean_links", R.string.feature_clean_links, R.string.feature_clean_links_desc),
 }
 
 class FeaturePrefs private constructor(context: Context) {
