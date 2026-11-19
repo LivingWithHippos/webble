@@ -9,6 +9,7 @@ import android.widget.Toast
 import androidx.core.content.edit
 import androidx.core.net.toUri
 import com.github.livingwithhippos.webble.web.ClearUrls
+import com.github.livingwithhippos.webble.web.PagePreloader
 
 object LinkUtils {
 
@@ -72,7 +73,8 @@ object LinkUtils {
      * page is already in a bubble (and reusing is on), that bubble is brought forward instead of
      * making a duplicate. Falls back to a full screen page when bubbles are not allowed.
      *
-     * @param expand false adds the bubble to the stack without opening it ("read later").
+     * @param expand false adds the bubble to the stack without opening it ("read later"); its
+     *   page is preloaded so it's ready when the bubble is opened.
      */
     fun openLink(activity: Activity, link: Uri, expand: Boolean = true) {
         // Cleaned first, so a tracked and a clean copy of a page share one bubble.
@@ -92,7 +94,10 @@ object LinkUtils {
         if (existing != null) {
             notifier.reshowBubble(existing, expand)
         } else {
-            notifier.showBubble(id = newLinkId(activity), url = url.toString(), expand = expand)
+            val id = newLinkId(activity)
+            notifier.showBubble(id = id, url = url.toString(), expand = expand)
+            // A collapsed bubble has no activity yet: start loading its page in the background.
+            if (!expand) PagePreloader.preload(activity, id, url.toString())
         }
     }
 }

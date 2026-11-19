@@ -68,6 +68,8 @@
     <string name="feature_dark_pages_desc">Darken pages when the system is in dark mode</string>
     <string name="feature_link_menu">Link menu</string>
     <string name="feature_link_menu_desc">Long-press a link to open it in a new bubble or copy it</string>
+    <string name="feature_expand_bubbles">Open bubbles right away</string>
+    <string name="feature_expand_bubbles_desc">Expand the bubble when you open a link. When off, the link is added to your bubbles collapsed</string>
     <string name="feature_reuse_bubbles">Reuse bubbles</string>
     <string name="feature_reuse_bubbles_desc">Opening a link that is already in a bubble expands that bubble</string>
     <string name="feature_close_all">Close all</string>

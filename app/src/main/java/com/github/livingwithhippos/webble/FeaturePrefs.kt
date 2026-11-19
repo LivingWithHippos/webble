@@ -26,6 +26,11 @@ enum class Feature(
     ),
     DARK_PAGES("dark_pages", R.string.feature_dark_pages, R.string.feature_dark_pages_desc),
     LINK_MENU("link_menu", R.string.feature_link_menu, R.string.feature_link_menu_desc),
+    EXPAND_BUBBLES(
+        "expand_bubbles",
+        R.string.feature_expand_bubbles,
+        R.string.feature_expand_bubbles_desc,
+    ),
     REUSE_BUBBLES("reuse_bubbles", R.string.feature_reuse_bubbles, R.string.feature_reuse_bubbles_desc),
     CLOSE_ALL("close_all", R.string.feature_close_all, R.string.feature_close_all_desc),
     RECENT_PAGES("recent_pages", R.string.feature_recent_pages, R.string.feature_recent_pages_desc),

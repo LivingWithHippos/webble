@@ -6,7 +6,6 @@ import android.content.ClipboardManager
 import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
-import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Build
 import android.os.Bundle
@@ -34,8 +33,8 @@ import com.github.livingwithhippos.webble.ui.WebPageScreen
 import com.github.livingwithhippos.webble.ui.theme.WebbleTheme
 import com.github.livingwithhippos.webble.web.DesktopMode
 import com.github.livingwithhippos.webble.web.Downloads
-import com.github.livingwithhippos.webble.web.Favicons
 import com.github.livingwithhippos.webble.web.NativeApps
+import com.github.livingwithhippos.webble.web.PagePreloader
 import com.github.livingwithhippos.webble.web.PageCallbacks
 import com.github.livingwithhippos.webble.web.PageState
 import com.github.livingwithhippos.webble.web.ReaderMode
@@ -66,24 +65,19 @@ class WebPageActivity : ComponentActivity(), PageCallbacks, PageActions {
                 .putExtra(EXTRA_ID, id)
     }
 
-    private val state = PageState()
+    private lateinit var state: PageState
 
     private lateinit var webView: WebView
     private var readerView: WebView? = null
     private lateinit var notifier: BubbleNotifier
     private lateinit var featurePrefs: FeaturePrefs
-    private lateinit var history: HistoryStore
+    private lateinit var infoUpdater: PageInfoUpdater
 
     private var rendererGone = false
     private var linkId = -1
     private var inBubble = false
 
-    private var updateJob: Job? = null
     private var nativeAppJob: Job? = null
-    private var iconJob: Job? = null
-
-    /** The site's icon from Favicons (host to icon): better than WebView's onReceivedIcon. */
-    private var siteIcon: Pair<String, Bitmap>? = null
 
     private var fileCallback: ValueCallback<Array<Uri>>? = null
     private val fileChooser =
@@ -106,22 +100,41 @@ class WebPageActivity : ComponentActivity(), PageCallbacks, PageActions {
         enableEdgeToEdge()
         notifier = BubbleNotifier(this)
         featurePrefs = FeaturePrefs.get(this)
-        history = HistoryStore.get(this)
-        state.features = featurePrefs.enabled.value
-
-        if (state.has(Feature.AD_BLOCK)) AdBlocker.get(this).warmUp()
-        webView = createPageWebView(this, state, this)
         onBackPressedDispatcher.addCallback(this, backCallback)
 
-        readIntent(intent)
-        val savedUrl = savedInstanceState?.getString(KEY_URL)
-        if (savedUrl != null) state.url = savedUrl
-        state.desktopMode = savedInstanceState?.getBoolean(KEY_DESKTOP_MODE) == true &&
-            state.has(Feature.DESKTOP_SITE)
-        applyDesktopMode(reload = false)
-        applyDarkening()
-        if (savedInstanceState == null || webView.restoreState(savedInstanceState) == null) {
-            if (state.url.isNotEmpty()) webView.loadUrl(state.url)
+        val intentUrl = readIntent(intent)
+        // A collapsed bubble's page may already be loading in the background: take it over.
+        val preloaded = if (savedInstanceState == null && linkId != -1) {
+            PagePreloader.take(linkId)
+        } else {
+            null
+        }
+        if (preloaded != null) {
+            state = preloaded.state
+            state.features = featurePrefs.enabled.value
+            webView = preloaded.webView
+            infoUpdater = preloaded.infoUpdater
+            preloaded.attach(this, this)
+            // Already loading with the default user agent: no desktop mode, no reload.
+            applyDarkening()
+            onUrlChanged()
+        } else {
+            state = PageState()
+            state.features = featurePrefs.enabled.value
+            if (intentUrl != null) state.url = intentUrl
+            infoUpdater = PageInfoUpdater(this, state, linkId, inBubble)
+            if (state.has(Feature.AD_BLOCK)) AdBlocker.get(this).warmUp()
+            webView = createPageWebView(this, state, this)
+
+            val savedUrl = savedInstanceState?.getString(KEY_URL)
+            if (savedUrl != null) state.url = savedUrl
+            state.desktopMode = savedInstanceState?.getBoolean(KEY_DESKTOP_MODE) == true &&
+                state.has(Feature.DESKTOP_SITE)
+            applyDesktopMode(reload = false)
+            applyDarkening()
+            if (savedInstanceState == null || webView.restoreState(savedInstanceState) == null) {
+                if (state.url.isNotEmpty()) webView.loadUrl(state.url)
+            }
         }
 
         lifecycleScope.launch {
@@ -143,16 +156,16 @@ class WebPageActivity : ComponentActivity(), PageCallbacks, PageActions {
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         setIntent(intent)
-        readIntent(intent)
+        readIntent(intent)?.let { state.url = it }
         if (state.url.isNotEmpty()) webView.loadUrl(state.url)
     }
 
-    private fun readIntent(intent: Intent) {
+    /** Reads the link id and bubble flag, and returns the page URL, if the intent has one. */
+    private fun readIntent(intent: Intent): String? {
         linkId = intent.getIntExtra(EXTRA_ID, -1)
         inBubble = intent.getBooleanExtra(EXTRA_IN_BUBBLE, false)
-        val url = intent.getStringExtra(EXTRA_URL)
+        return intent.getStringExtra(EXTRA_URL)
             ?: intent.data?.takeIf { LinkUtils.isWebUri(it) }?.toString()
-        if (url != null) state.url = url
     }
 
     // region Feature switches
@@ -259,32 +272,9 @@ class WebPageActivity : ComponentActivity(), PageCallbacks, PageActions {
         lookUpNativeApp()
     }
 
-    /** Title and favicon arrive in bursts: wait a little, then update history and bubble once. */
-    override fun onPageInfoChanged() {
-        updateJob?.cancel()
-        updateJob = lifecycleScope.launch {
-            delay(700)
-            if (state.has(Feature.RECENT_PAGES)) history.add(state.url, state.title)
-            if (inBubble && linkId != -1) {
-                val host = state.url.toUri().host
-                val icon = siteIcon?.takeIf { it.first == host }?.second ?: state.favicon
-                notifier.updateBubble(linkId, state.url, state.title, icon)
-            }
-        }
-    }
+    override fun onPageInfoChanged() = infoUpdater.onPageInfoChanged()
 
-    /** Looks for a better bubble icon than WebView's, once per site. */
-    override fun onPageFinished(url: String) {
-        if (!inBubble || linkId == -1) return
-        val host = url.toUri().host ?: return
-        if (siteIcon?.first == host || iconJob?.isActive == true) return
-        iconJob = lifecycleScope.launch {
-            val icon = Favicons.find(webView, url) ?: return@launch
-            if (state.url.toUri().host != host) return@launch
-            siteIcon = host to icon
-            onPageInfoChanged()
-        }
-    }
+    override fun onPageFinished(url: String) = infoUpdater.onPageFinished(webView, url)
 
     override fun onShowFullscreen(view: View, callback: WebChromeClient.CustomViewCallback) {
         if (!state.has(Feature.FULLSCREEN_VIDEO) || state.customView != null) {
@@ -490,7 +480,7 @@ class WebPageActivity : ComponentActivity(), PageCallbacks, PageActions {
     }
 
     override fun onDestroy() {
-        updateJob?.cancel()
+        infoUpdater.cancel()
         nativeAppJob?.cancel()
         fileCallback?.onReceiveValue(null)
         fileCallback = null

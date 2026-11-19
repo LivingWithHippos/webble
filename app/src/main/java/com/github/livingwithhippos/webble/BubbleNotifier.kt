@@ -24,6 +24,7 @@ import androidx.core.graphics.createBitmap
 import androidx.core.graphics.drawable.IconCompat
 import androidx.core.net.toUri
 import androidx.core.os.bundleOf
+import com.github.livingwithhippos.webble.web.PagePreloader
 
 /**
  * Posts one bubble per link. Bubbles are only shown for conversation notifications, so every
@@ -122,6 +123,7 @@ class BubbleNotifier(context: Context) {
         ShortcutManagerCompat.removeLongLivedShortcuts(appContext, shortcutIds)
         ShortcutManagerCompat.removeAllDynamicShortcuts(appContext)
         favicons.clear()
+        PagePreloader.clear()
     }
 
     /**
@@ -241,6 +243,7 @@ class BubbleNotifier(context: Context) {
 
     fun removeBubble(id: Int) {
         favicons.remove(id)
+        PagePreloader.discard(id)
         notificationManager.cancel(id)
         removeShortcut(appContext, id)
     }

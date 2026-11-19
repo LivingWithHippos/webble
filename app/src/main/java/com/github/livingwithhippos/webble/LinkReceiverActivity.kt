@@ -7,7 +7,7 @@ import androidx.activity.ComponentActivity
 /**
  * Invisible activity that receives clicked links (Webble is registered as a browser) and shared
  * text. It posts the bubble while it is still in the foreground, which lets the bubble expand
- * automatically, and then finishes.
+ * automatically (unless "Open bubbles right away" is off), and then finishes.
  */
 class LinkReceiverActivity : ComponentActivity() {
 
@@ -17,7 +17,11 @@ class LinkReceiverActivity : ComponentActivity() {
         if (url == null) {
             Toast.makeText(this, R.string.no_link_found, Toast.LENGTH_SHORT).show()
         } else {
-            LinkUtils.openLink(this, url)
+            LinkUtils.openLink(
+                this,
+                url,
+                expand = FeaturePrefs.get(this).isEnabled(Feature.EXPAND_BUBBLES),
+            )
         }
         finish()
     }
