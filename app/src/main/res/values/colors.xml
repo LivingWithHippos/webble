@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Window background before Compose draws: matches the theme's background. -->
+    <color name="window_background">#FFD5E0D9</color>
+</resources>
