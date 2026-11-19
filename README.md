@@ -21,7 +21,7 @@ For now only available on the [release section of GitHub](https://github.com/Liv
 
 To get updates automatically, add it to [Obtainium](https://github.com/ImranR98/Obtainium):
 
-[<img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/badge_obtainium.png" alt="Get it on Obtainium" height="150">](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/LivingWithHippos/webble)
+[<img src="https://raw.githubusercontent.com/ImranR98/Obtainium/main/assets/graphics/badge_obtainium.png" alt="Get it on Obtainium" height="100">](https://apps.obtainium.imranr.dev/redirect?r=obtainium://add/https://github.com/LivingWithHippos/webble)
 
 ## Screenshots
 
