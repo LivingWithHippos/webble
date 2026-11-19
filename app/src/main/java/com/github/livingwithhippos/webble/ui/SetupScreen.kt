@@ -316,8 +316,9 @@ fun SetupScreen(refreshKey: Int, onOpenLink: (Uri) -> Unit) {
 
 private const val REPO_URL = "https://github.com/LivingWithHippos/webble"
 private const val LICENSE_URL = "$REPO_URL/blob/master/LICENSE"
+private const val DONATE_URL = "https://ko-fi.com/E1E412NFX7"
 
-/** App version, plus links to the source code and license (opened in a bubble). */
+/** Donation link, app version, and links to the source code and license (opened in a bubble). */
 @Composable
 private fun AboutFooter(onOpenLink: (Uri) -> Unit) {
     val context = LocalContext.current
@@ -332,6 +333,12 @@ private fun AboutFooter(onOpenLink: (Uri) -> Unit) {
             .fillMaxWidth()
             .padding(top = 24.dp),
     ) {
+        PillButton(
+            text = stringResource(R.string.about_donate),
+            onClick = { onOpenLink(DONATE_URL.toUri()) },
+            trailingIcon = R.drawable.ic_open_in_new,
+        )
+        Spacer(Modifier.height(16.dp))
         Text(
             stringResource(R.string.about_version, stringResource(R.string.app_name), version),
             style = MaterialTheme.typography.bodySmall,

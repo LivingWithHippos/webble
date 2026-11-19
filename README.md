@@ -32,3 +32,7 @@ To get updates automatically, add it to [Obtainium](https://github.com/ImranR98/
 | Settings 1                                                                                                               | Settings 2                                                                                                       |
 |-------------------------------------------------------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------|
 | <img width="150" src="https://raw.githubusercontent.com/LivingWithHippos/webble/refs/heads/master/fastlane/metadata/android/en-US/images/phoneScreenshots/settings_1.jpg" alt="Settings 1"> | <img width="150" src="https://raw.githubusercontent.com/LivingWithHippos/webble/refs/heads/master/fastlane/metadata/android/en-US/images/phoneScreenshots/settings_2.jpg" alt="Settings 2"> |
+
+## Donate :coffee:
+
+[![ko-fi](https://ko-fi.com/img/githubbutton_sm.svg)](https://ko-fi.com/E1E412NFX7)
