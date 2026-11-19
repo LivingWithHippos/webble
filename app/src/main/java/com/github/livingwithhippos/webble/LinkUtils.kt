@@ -1,9 +1,14 @@
 package com.github.livingwithhippos.webble
 
 import android.app.Activity
+import android.content.ActivityNotFoundException
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
+import android.content.pm.ResolveInfo
 import android.net.Uri
+import android.os.Build
 import android.util.Patterns
 import android.widget.Toast
 import androidx.core.content.edit
@@ -43,6 +48,66 @@ object LinkUtils {
         val matcher = Patterns.WEB_URL.matcher(text)
         if (!matcher.find()) return null
         return normalize(matcher.group())
+    }
+
+    /**
+     * Opens [uri] the way any other app would, but never in Webble: in the default browser (or
+     * an app that handles the link), or when Webble is the default, in another installed browser.
+     * With several other browsers, the system asks which one.
+     *
+     * @return false when no other app can open the link.
+     */
+    fun openOutsideWebble(context: Context, uri: Uri): Boolean {
+        val view = Intent(Intent.ACTION_VIEW, uri).addCategory(Intent.CATEGORY_BROWSABLE)
+        val own = context.packageName
+        val pm = context.packageManager
+
+        val default = defaultHandler(pm, view)
+        val intent = if (default != null && default.activityInfo.packageName != own) {
+            view
+        } else {
+            // Webble is the default (or there is none): pick among the other handlers.
+            val others = allHandlers(pm, view).filter { it.activityInfo.packageName != own }
+            when (others.size) {
+                0 -> return false
+                1 -> Intent(view).setClassName(
+                    others.first().activityInfo.packageName,
+                    others.first().activityInfo.name,
+                )
+                else -> Intent.createChooser(view, null).putExtra(
+                    Intent.EXTRA_EXCLUDE_COMPONENTS,
+                    arrayOf(ComponentName(context, LinkReceiverActivity::class.java)),
+                )
+            }
+        }
+        return try {
+            context.startActivity(intent)
+            true
+        } catch (_: ActivityNotFoundException) {
+            false
+        }
+    }
+
+    /** The app that opens [intent] without asking, or null when the system would ask. */
+    private fun defaultHandler(pm: PackageManager, intent: Intent): ResolveInfo? {
+        val flags = PackageManager.MATCH_DEFAULT_ONLY
+        val info = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            pm.resolveActivity(intent, PackageManager.ResolveInfoFlags.of(flags.toLong()))
+        } else {
+            pm.resolveActivity(intent, flags)
+        }
+        // "android" is the system's app picker: there is no default.
+        return info?.takeIf { it.activityInfo.packageName != "android" }
+    }
+
+    /** Every app that can open [intent]. MATCH_ALL, or web intents only return the default. */
+    private fun allHandlers(pm: PackageManager, intent: Intent): List<ResolveInfo> {
+        val flags = PackageManager.MATCH_ALL
+        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+            pm.queryIntentActivities(intent, PackageManager.ResolveInfoFlags.of(flags.toLong()))
+        } else {
+            pm.queryIntentActivities(intent, flags)
+        }
     }
 
     fun normalize(raw: String): Uri? {

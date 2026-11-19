@@ -318,10 +318,17 @@ private const val REPO_URL = "https://github.com/LivingWithHippos/webble"
 private const val LICENSE_URL = "$REPO_URL/blob/master/LICENSE"
 private const val DONATE_URL = "https://ko-fi.com/E1E412NFX7"
 
-/** Donation link, app version, and links to the source code and license (opened in a bubble). */
+/**
+ * Donation link, app version, and links to the source code and license. These open in the
+ * user's other browser, not in a bubble; only when there is none do they fall back to Webble.
+ */
 @Composable
 private fun AboutFooter(onOpenLink: (Uri) -> Unit) {
     val context = LocalContext.current
+    val openOutside = { url: String ->
+        val uri = url.toUri()
+        if (!LinkUtils.openOutsideWebble(context, uri)) onOpenLink(uri)
+    }
     val version = remember {
         runCatching {
             context.packageManager.getPackageInfo(context.packageName, 0).versionName
@@ -335,7 +342,7 @@ private fun AboutFooter(onOpenLink: (Uri) -> Unit) {
     ) {
         PillButton(
             text = stringResource(R.string.about_donate),
-            onClick = { onOpenLink(DONATE_URL.toUri()) },
+            onClick = { openOutside(DONATE_URL) },
             trailingIcon = R.drawable.ic_open_in_new,
         )
         Spacer(Modifier.height(16.dp))
@@ -345,10 +352,10 @@ private fun AboutFooter(onOpenLink: (Uri) -> Unit) {
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
         Row {
-            TextButton(onClick = { onOpenLink(REPO_URL.toUri()) }) {
+            TextButton(onClick = { openOutside(REPO_URL) }) {
                 Text(stringResource(R.string.about_source_code))
             }
-            TextButton(onClick = { onOpenLink(LICENSE_URL.toUri()) }) {
+            TextButton(onClick = { openOutside(LICENSE_URL) }) {
                 Text(stringResource(R.string.about_license))
             }
         }
