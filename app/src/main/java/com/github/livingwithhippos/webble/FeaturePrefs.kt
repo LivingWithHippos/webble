@@ -11,11 +11,13 @@ import kotlinx.coroutines.flow.asStateFlow
 /** SharedPreferences file shared by the whole app. */
 const val PREFS_NAME = "webble"
 
-/** Optional features the user can turn on and off from the setup screen. All are on by default. */
+/** Optional features the user can turn on and off from the setup screen. */
 enum class Feature(
     val key: String,
     @param:StringRes val title: Int,
     @param:StringRes val description: Int,
+    /** The state before the user changes the switch. */
+    val defaultOn: Boolean = true,
 ) {
     FILE_UPLOADS("file_uploads", R.string.feature_file_uploads, R.string.feature_file_uploads_desc),
     DOWNLOADS("downloads", R.string.feature_downloads, R.string.feature_downloads_desc),
@@ -30,6 +32,7 @@ enum class Feature(
         "expand_bubbles",
         R.string.feature_expand_bubbles,
         R.string.feature_expand_bubbles_desc,
+        defaultOn = false,
     ),
     REUSE_BUBBLES("reuse_bubbles", R.string.feature_reuse_bubbles, R.string.feature_reuse_bubbles_desc),
     CLOSE_ALL("close_all", R.string.feature_close_all, R.string.feature_close_all_desc),
@@ -72,7 +75,7 @@ class FeaturePrefs private constructor(context: Context) {
     }
 
     private fun read(): Set<Feature> =
-        Feature.entries.filter { prefs.getBoolean(PREFIX + it.key, true) }.toSet()
+        Feature.entries.filter { prefs.getBoolean(PREFIX + it.key, it.defaultOn) }.toSet()
 
     fun isEnabled(feature: Feature): Boolean = feature in _enabled.value
 
