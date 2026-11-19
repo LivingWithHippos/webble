@@ -1,5 +1,7 @@
 # webble
 
+[![powered by Ghostery](https://img.shields.io/badge/ghostery-powered-blue?logo=ghostery)](https://github.com/ghostery/adblocker)
+
 A webview browser for Android (ab)using the bubbles API. 
 
 I used to have one of these, but it got removed from the Play Store, so I just wasted an afternoon of tokens to make a better one.
