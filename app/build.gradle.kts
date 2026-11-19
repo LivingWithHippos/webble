@@ -25,11 +25,16 @@ android {
                 enable = true
                 packageScope = setOf("androidx.**", "kotlin.**", "kotlinx.**")
             }
+
+            proguardFiles(
+                // Default file with automatically generated optimization rules.
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+            )
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     buildFeatures {
         compose = true
@@ -42,6 +47,10 @@ android {
         }
     }
 }
+
+// APKs are named webble-<versionName>-<buildType>.apk (e.g. webble-1.0-release.apk) instead of
+// app-<buildType>.apk. Set after the android block so versionName is already known.
+base.archivesName = "webble-${android.defaultConfig.versionName}"
 
 dependencies {
     implementation(platform(libs.androidx.compose.bom))
