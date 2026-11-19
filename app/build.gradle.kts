@@ -34,6 +34,13 @@ android {
     buildFeatures {
         compose = true
     }
+    testOptions {
+        unitTests {
+            // AGP's Compose Preview tasks need compiled resources, or creating them fails
+            // (and with it `./gradlew tasks`).
+            isIncludeAndroidResources = true
+        }
+    }
 }
 
 dependencies {
