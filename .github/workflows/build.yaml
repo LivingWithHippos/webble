@@ -1,0 +1,48 @@
+name: Build
+on:
+  pull_request:
+  push:
+    branches:
+      - master
+jobs:
+  build:
+    name: Build release APK
+    runs-on: ubuntu-latest
+    # Skip pull requests from forks: they can't access the signing keystore secrets.
+    if: github.event_name == 'push' || github.event.pull_request.head.repo.full_name == github.repository
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Setup Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: 'temurin'
+          # Matches gradle/gradle-daemon-jvm.properties, so Gradle doesn't download another JDK.
+          java-version: '25'
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+      - name: Retrieve keystore for apk signing
+        env:
+          ENCODED_KEYSTORE: ${{ secrets.KEYSTORE }}
+        run: |
+          if [ -z "$ENCODED_KEYSTORE" ]; then
+            echo "::error::The KEYSTORE secret is missing: the release APK can't be signed."
+            exit 1
+          fi
+          echo "$ENCODED_KEYSTORE" | base64 --decode > "$RUNNER_TEMP/release.keystore"
+      - name: Build the release APK
+        env:
+          KEYSTORE: ${{ runner.temp }}/release.keystore
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+          KEY_PASSWORD: ${{ secrets.KEY_PASSWORD }}
+        run: ./gradlew :app:assembleRelease --stacktrace
+      - name: Save apk
+        uses: actions/upload-artifact@v7
+        with:
+          name: webble
+          path: app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
+      - name: Remove keystore
+        if: always()
+        run: rm -f "$RUNNER_TEMP/release.keystore"
