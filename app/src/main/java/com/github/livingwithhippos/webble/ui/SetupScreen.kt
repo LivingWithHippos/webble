@@ -308,6 +308,42 @@ fun SetupScreen(refreshKey: Int, onOpenLink: (Uri) -> Unit) {
                     }
                 }
             }
+
+            item { AboutFooter(onOpenLink) }
+        }
+    }
+}
+
+private const val REPO_URL = "https://github.com/LivingWithHippos/webble"
+private const val LICENSE_URL = "$REPO_URL/blob/master/LICENSE"
+
+/** App version, plus links to the source code and license (opened in a bubble). */
+@Composable
+private fun AboutFooter(onOpenLink: (Uri) -> Unit) {
+    val context = LocalContext.current
+    val version = remember {
+        runCatching {
+            context.packageManager.getPackageInfo(context.packageName, 0).versionName
+        }.getOrNull().orEmpty()
+    }
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(top = 24.dp),
+    ) {
+        Text(
+            stringResource(R.string.about_version, stringResource(R.string.app_name), version),
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
+        Row {
+            TextButton(onClick = { onOpenLink(REPO_URL.toUri()) }) {
+                Text(stringResource(R.string.about_source_code))
+            }
+            TextButton(onClick = { onOpenLink(LICENSE_URL.toUri()) }) {
+                Text(stringResource(R.string.about_license))
+            }
         }
     }
 }
